@@ -1,0 +1,115 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Search, Filter, Upload, MoreHorizontal, Plus } from "lucide-react";
+import FuturePosition from "./FuturePosition";
+import OrderSpot from "./OrderSpot";
+import { initializeSocket, getSocket } from "@/lib/socket";
+
+export default function TradingActiveTabs() {
+    const [activeTab, setActiveTab] = useState<"orderspot" | "futureposition">(
+        "orderspot",
+    );
+    const [tradeCount, setTradeCount] = useState(0);
+
+    const tabs = [
+        { label: "Spot Order", value: "orderspot" },
+        { label: "Future Position", value: "futureposition" },
+    ];
+
+    // Initialize Socket.io and listen for trading events
+    useEffect(() => {
+        initializeSocket();
+        const socket = getSocket();
+
+        if (socket) {
+            // Track number of active trades
+            socket.on("trading:order-placed", () => {
+                setTradeCount((prev) => prev + 1);
+                console.log("📍 New order placed - total orders:", tradeCount + 1);
+            });
+
+            socket.on("trading:order-executed", () => {
+                console.log("✅ Order executed");
+            });
+
+            socket.on("trading:order-cancelled", () => {
+                setTradeCount((prev) => Math.max(0, prev - 1));
+                console.log("❌ Order cancelled");
+            });
+        }
+
+        return () => {
+            if (socket) {
+                socket.off("trading:order-placed");
+                socket.off("trading:order-executed");
+                socket.off("trading:order-cancelled");
+            }
+        };
+    }, []);
+
+    return (
+        <div className="w-full rounded-2xl bg-[#0E0D15] border border-[#0E0D15] p-2 sm:p-3">
+            <div className="mb-4 flex flex-col bg-[#17161E] gap-4 rounded-md p-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-sm font-Manrope text-white">
+                    Active Traded{" "}
+                    <span className="text-gray-400 font-Manrope">
+                        ({tradeCount})
+                    </span>
+                </h2>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Search */}
+                    <div className="relative">
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Search"
+                            className="h-9 w-40 rounded-md font-Manrope bg-[#212027] pl-9 pr-3 text-sm text-white placeholder-gray-400 outline-none ring-1 ring-white/10 focus:ring-white/20 sm:w-56"
+                        />
+                    </div>
+
+                    {/* Filter */}
+                    <button className="flex h-9 font-Manrope items-center gap-2 rounded-md bg-[#212027] px-3 text-sm text-gray-300 ring-1 ring-white/10 hover:bg-[#1F2937]">
+                        <Filter size={14} />
+                        Filter
+                    </button>
+
+                    {/* Export */}
+                    <button className="flex h-9 font-Manrope items-center gap-2 rounded-md bg-[#212027] px-3 text-sm text-gray-300 ring-1 ring-white/10 hover:bg-[#1F2937]">
+                        <Upload size={14} />
+                        Export
+                    </button>
+
+                    <button className="flex h-9 w-9 font-Manrope items-center justify-center rounded-md bg-[#212027] text-gray-300 ring-1 ring-white/10 hover:bg-[#1F2937]">
+                        <MoreHorizontal size={16} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex gap-6 border-b font-Manrope border-white/10 px-0 mb-4">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.value}
+                        onClick={() =>
+                            setActiveTab(tab.value as "orderspot" | "futureposition")
+                        }
+                        className={`pb-1 font-Manrope cursor-pointer text-sm capitalize ${
+                            activeTab === tab.value
+                                ? "text-white border-b-2 border-[#00B595]"
+                                : "text-gray-400"
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === "orderspot" && <OrderSpot />}
+            {activeTab === "futureposition" && <FuturePosition />}
+        </div>
+    );
+}

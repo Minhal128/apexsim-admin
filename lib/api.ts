@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://apexsim-backend.onrender.com/api";
 
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     // Improved token retrieval with validation
@@ -34,9 +34,9 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
 
     console.log(`[ADMIN API] Request: ${options.method || 'GET'} ${endpoint}`, body ? JSON.parse(body as string) : '');
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers as Record<string, string> || {}),
     };
 
     // Only add Authorization header if token exists

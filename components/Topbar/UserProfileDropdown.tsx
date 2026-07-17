@@ -61,7 +61,7 @@ export default function UserProfileDropdown({
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://apexsim-backend.onrender.com/api";
       const response = await fetch(`${apiUrl}/profile/upload-avatar`, {
         method: "POST",
         headers: {

@@ -7,7 +7,8 @@ export function initializeSocket(): Socket {
         return socket;
     }
 
-    socket = io('http://localhost:5001', {
+    const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://apexsim-backend.onrender.com';
+    socket = io(SOCKET_URL, {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,

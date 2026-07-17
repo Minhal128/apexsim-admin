@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Search, Filter, Upload, MoreHorizontal, Plus } from "lucide-react";
 import FuturePosition from "./FuturePosition";
 import OrderSpot from "./OrderSpot";
-import { initializeSocket, getSocket } from "@/lib/socket";
 
 export default function TradingActiveTabs() {
     const [activeTab, setActiveTab] = useState<"orderspot" | "futureposition">(
@@ -16,37 +15,6 @@ export default function TradingActiveTabs() {
         { label: "Spot Order", value: "orderspot" },
         { label: "Future Position", value: "futureposition" },
     ];
-
-    // Initialize Socket.io and listen for trading events
-    useEffect(() => {
-        initializeSocket();
-        const socket = getSocket();
-
-        if (socket) {
-            // Track number of active trades
-            socket.on("trading:order-placed", () => {
-                setTradeCount((prev) => prev + 1);
-                console.log("📍 New order placed - total orders:", tradeCount + 1);
-            });
-
-            socket.on("trading:order-executed", () => {
-                console.log("✅ Order executed");
-            });
-
-            socket.on("trading:order-cancelled", () => {
-                setTradeCount((prev) => Math.max(0, prev - 1));
-                console.log("❌ Order cancelled");
-            });
-        }
-
-        return () => {
-            if (socket) {
-                socket.off("trading:order-placed");
-                socket.off("trading:order-executed");
-                socket.off("trading:order-cancelled");
-            }
-        };
-    }, []);
 
     return (
         <div className="w-full rounded-2xl bg-[#0E0D15] border border-[#0E0D15] p-2 sm:p-3">

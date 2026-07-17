@@ -4,7 +4,6 @@ import Image from "next/image";
 import { ArrowUp, ArrowDown, Clock, CheckCircle, XCircle } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import { updateTrade } from "@/lib/adminApi";
-import { initializeSocket, getSocket } from "@/lib/socket";
 
 interface Order {
     _id: string;
@@ -50,73 +49,15 @@ export default function OrderSpot() {
 
     const availablePairs = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
 
-    // Fetch trades on component mount
+    // Fetch trades on component mount and refresh every 15s
     useEffect(() => {
         fetchTrades();
         fetchMarketPrices();
-        initializeSocket();
-        const socket = getSocket();
-
-        if (socket) {
-            // Listen for real-time trading events
-            socket.on("trading:order-placed", (event: any) => {
-                console.log("📍 Order placed:", event);
-                setOrderMessage({ type: 'success', text: 'Order placed successfully!' });
-                setOrders((prev) => [
-                    {
-                        _id: event.orderId,
-                        symbol: event.symbol,
-                        type: event.type,
-                        marketType: event.marketType,
-                        price: event.price,
-                        amount: event.amount,
-                        total: event.total,
-                        status: "pending",
-                        createdAt: event.createdAt,
-                        userName: event.userName,
-                    },
-                    ...prev,
-                ]);
-                setTimeout(() => setOrderMessage(null), 5000);
-            });
-
-            socket.on("trading:order-executed", (event: any) => {
-                console.log("✅ Order executed:", event);
-                setOrders((prev) =>
-                    prev.map((order) =>
-                        order._id === event.orderId
-                            ? {
-                                ...order,
-                                status: "completed",
-                                executedPrice: event.executedPrice,
-                                executedAt: event.executedAt,
-                                pnl: event.type === "sell" ? (event.executedPrice - event.entryPrice) * event.amount : 0,
-                                pnlPercent: event.type === "sell" ? ((event.executedPrice - event.entryPrice) / event.entryPrice * 100).toFixed(2) as any : undefined,
-                            }
-                            : order
-                    )
-                );
-            });
-
-            socket.on("trading:order-cancelled", (event: any) => {
-                console.log("❌ Order cancelled:", event);
-                setOrders((prev) =>
-                    prev.map((order) =>
-                        order._id === event.orderId
-                            ? { ...order, status: "cancelled" }
-                            : order
-                    )
-                );
-            });
-        }
-
-        return () => {
-            if (socket) {
-                socket.off("trading:order-placed");
-                socket.off("trading:order-executed");
-                socket.off("trading:order-cancelled");
-            }
-        };
+        const interval = setInterval(() => {
+            fetchTrades();
+            fetchMarketPrices();
+        }, 15000);
+        return () => clearInterval(interval);
     }, []);
 
     const fetchTrades = async () => {

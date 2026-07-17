@@ -558,11 +558,11 @@ export default function OrderSpot() {
                                         </td>
 
                                         <td className="px-3 py-4 text-sm">
-                                            ${order.price.toFixed(2)}
+                                            ${(order.price || 0).toFixed(2)}
                                         </td>
 
                                         <td className="px-3 py-4 text-sm">
-                                            {order.amount.toFixed(6)}
+                                            {(order.amount || 0).toFixed(6)}
                                         </td>
 
                                         <td className="px-3 py-4">

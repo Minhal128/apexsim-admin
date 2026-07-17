@@ -8,11 +8,12 @@ import {
   ArrowUp,
   ArrowDown,
   Loader,
+  RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import MarketDetailModal from "./MarketDetailModal";
-import { getMarketFeeds, toggleMarketFeed } from "@/lib/adminApi";
+import { getMarketFeeds, toggleMarketFeed, getRealtimeMarketPrices, refreshMarketPrices } from "@/lib/adminApi";
 
 interface Market {
   _id?: string;
@@ -39,12 +40,61 @@ export default function MarketTable() {
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [toggleLoading, setToggleLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchMarkets();
+    
+    // Auto-refresh prices every 30 seconds
+    const interval = setInterval(() => {
+      fetchRealtimePrices();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchRealtimePrices = async () => {
+    try {
+      const data = await getRealtimeMarketPrices();
+      if (data && data.prices) {
+        // Update prices without full reload
+        setMarkets(prevMarkets => 
+          prevMarkets.map(market => {
+            const updatedPrice = data.prices[market.pair] || data.prices[market.asset];
+            if (updatedPrice) {
+              return {
+                ...market,
+                price: updatedPrice.price || market.price,
+                change: updatedPrice.change24h || market.change,
+                changeUp: updatedPrice.change24h ? parseFloat(String(updatedPrice.change24h)) >= 0 : market.changeUp,
+                lastUpdate: new Date().toLocaleTimeString(),
+              };
+            }
+            return market;
+          })
+        );
+        setLastUpdated(new Date());
+      }
+    } catch (err) {
+      console.error("Failed to fetch realtime prices:", err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshMarketPrices();
+      await fetchMarkets();
+      setError("");
+    } catch (err: any) {
+      setError("Failed to refresh prices: " + err.message);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const fetchMarkets = async () => {
     setLoading(true);
@@ -52,18 +102,18 @@ export default function MarketTable() {
       const data = await getMarketFeeds(1, 50);
       const marketsList = data.data || data || [];
       
-      // Transform API data to match UI structure
+      // Transform API data to match UI structure with real market prices
       const transformedMarkets = Array.isArray(marketsList)
         ? marketsList.map((market: any) => ({
             _id: market._id || market.id,
             asset: market.symbol || market.asset || market.pair?.split("/")[0],
             pair: market.pair || `${market.symbol || market.asset}/USDT`,
-            price: market.price || "$0.00",
-            change: market.change || "0%",
+            price: market.price || market.currentPrice || "0.00",
+            change: market.change || market.change24h || "0",
             changeUp: market.change ? parseFloat(String(market.change)) >= 0 : false,
             icon: market.icon || "/assets/crypto.png",
             feed: {
-              name: market.feedSource || market.feed?.name || "Unknown",
+              name: market.feedSource || market.feed?.name || "CoinGecko",
               icon: market.feedIcon || "/assets/bi.png",
             },
             lastUpdate: market.lastUpdate || new Date().toLocaleTimeString(),
@@ -72,35 +122,19 @@ export default function MarketTable() {
         : [];
 
       setMarkets(transformedMarkets);
+      setLastUpdated(new Date());
       setError("");
     } catch (err: any) {
       console.error("Error fetching markets:", err);
-      setError(err.message || "Failed to load market feeds");
-      // Fallback mock data
-      setMarkets([
-        {
-          asset: "BTC",
-          icon: "/assets/bit.png",
-          pair: "BTC/USDT",
-          price: "$45,230.76",
-          change: "+0.2%",
-          changeUp: true,
-          feed: { name: "Binance", icon: "/assets/bi.png" },
-          lastUpdate: "9:16 AM",
-          status: true,
-        },
-        {
-          asset: "ETH",
-          icon: "/assets/eth.png",
-          pair: "ETH/USDT",
-          price: "$2,345.50",
-          change: "-0.5%",
-          changeUp: false,
-          feed: { name: "Kraken", icon: "/assets/kr.png" },
-          lastUpdate: "9:15 AM",
-          status: true,
-        },
-      ]);
+      const errorMessage = err.message || "Failed to load market feeds";
+      
+      // Only show error if it's not a token issue (already handled in api.ts)
+      if (!errorMessage.includes('Token not found') && !errorMessage.includes('authorization denied')) {
+        setError(errorMessage);
+      }
+      
+      // Don't use fallback mock data - let the backend provide real data
+      setMarkets([]);
     } finally {
       setLoading(false);
     }
@@ -125,6 +159,21 @@ export default function MarketTable() {
   return (
     <>
       <div className="w-full rounded-md bg-[#0E0D15] border border-white/5 p-3">
+        {/* Header with Refresh Button */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-sm text-gray-400">
+            Last updated: {lastUpdated.toLocaleTimeString()}
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "Refreshing..." : "Refresh Prices"}
+          </button>
+        </div>
+
         {error && (
           <div className="mb-4 p-3 rounded-md bg-red-500/10 text-red-400 text-sm">
             {error}

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { MoreHorizontal, Plus, X } from "lucide-react";
+import { MoreHorizontal, Plus, X, Edit2, Save } from "lucide-react";
 import Image from "next/image";
 import { ArrowUp, ArrowDown, Clock, CheckCircle, XCircle } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import { updateTrade } from "@/lib/adminApi";
 import { initializeSocket, getSocket } from "@/lib/socket";
 
 interface Order {
@@ -33,6 +34,9 @@ export default function OrderSpot() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [showPlaceOrder, setShowPlaceOrder] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+    const [editFormData, setEditFormData] = useState({ price: "", amount: "" });
     const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
     const [submitLoading, setSubmitLoading] = useState(false);
     const [orderMessage, setOrderMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -242,6 +246,51 @@ export default function OrderSpot() {
         }
     };
 
+    const handleEditOrder = (order: Order) => {
+        setEditingOrder(order);
+        setEditFormData({
+            price: order.price.toString(),
+            amount: order.amount.toString(),
+        });
+        setShowEditModal(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingOrder) return;
+
+        const price = parseFloat(editFormData.price);
+        const amount = parseFloat(editFormData.amount);
+
+        if (price <= 0 || amount <= 0) {
+            setOrderMessage({ type: 'error', text: 'Price and amount must be greater than 0' });
+            return;
+        }
+
+        setSubmitLoading(true);
+        try {
+            await updateTrade(editingOrder._id, {
+                price: price,
+                amount: amount,
+                total: price * amount,
+            });
+
+            setOrderMessage({ type: 'success', text: 'Trade updated successfully!' });
+            setShowEditModal(false);
+            setEditingOrder(null);
+            fetchTrades();
+
+            setTimeout(() => {
+                setOrderMessage(null);
+            }, 3000);
+        } catch (err) {
+            console.error("Failed to update trade:", err);
+            const errorMsg = err instanceof Error ? err.message : 'Failed to update trade. Please try again.';
+            setOrderMessage({ type: 'error', text: errorMsg });
+        } finally {
+            setSubmitLoading(false);
+        }
+    };
+
     const assetIcons: Record<string, string> = {
         BTC: "/assets/bit.png",
         ETH: "/assets/eth.png",
@@ -263,6 +312,18 @@ export default function OrderSpot() {
 
     return (
         <div className="space-y-4">
+            {/* Success/Error Message */}
+            {orderMessage && (
+                <div
+                    className={`p-3 rounded-lg text-sm ${orderMessage.type === 'success'
+                        ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}
+                >
+                    {orderMessage.text}
+                </div>
+            )}
+
             {/* Place Order Button */}
             <button
                 onClick={() => setShowPlaceOrder(true)}
@@ -271,6 +332,81 @@ export default function OrderSpot() {
                 <Plus size={16} />
                 Place Order
             </button>
+
+            {/* Edit Order Modal */}
+            {showEditModal && editingOrder && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#17161E] rounded-lg p-6 w-full max-w-md border border-white/10">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-white font-semibold">Edit Trade #{editingOrder._id.substring(0, 8)}</h3>
+                            <button
+                                onClick={() => {
+                                    setShowEditModal(false);
+                                    setEditingOrder(null);
+                                }}
+                                className="text-gray-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-[#212027] rounded p-3 text-sm">
+                                <p className="text-gray-400">Symbol: <span className="text-white">{editingOrder.symbol}</span></p>
+                                <p className="text-gray-400">Type: <span className="text-white capitalize">{editingOrder.type}</span></p>
+                                <p className="text-gray-400">Status: <span className="text-white capitalize">{editingOrder.status}</span></p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">
+                                    Price (USDT)
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={editFormData.price}
+                                    onChange={(e) =>
+                                        setEditFormData({ ...editFormData, price: e.target.value })
+                                    }
+                                    className="w-full bg-[#212027] text-white rounded px-3 py-2 border border-white/10"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">
+                                    Amount
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={editFormData.amount}
+                                    onChange={(e) =>
+                                        setEditFormData({ ...editFormData, amount: e.target.value })
+                                    }
+                                    className="w-full bg-[#212027] text-white rounded px-3 py-2 border border-white/10"
+                                />
+                            </div>
+
+                            {editFormData.price && editFormData.amount && (
+                                <div className="bg-[#212027] rounded p-3 text-sm">
+                                    <p className="text-gray-400">
+                                        New Total: <span className="text-white">{(parseFloat(editFormData.price) * parseFloat(editFormData.amount)).toFixed(2)} USDT</span>
+                                    </p>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleSaveEdit}
+                                disabled={submitLoading}
+                                className="w-full flex items-center justify-center gap-2 bg-[#00B595] text-white py-2 rounded hover:bg-[#00a086] disabled:opacity-50 transition"
+                            >
+                                <Save size={16} />
+                                {submitLoading ? "Saving..." : "Save Changes"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Place Order Modal */}
             {showPlaceOrder && (
@@ -520,17 +656,36 @@ export default function OrderSpot() {
 
                                         <td className="px-3 py-4 text-right">
                                             {order.status === "pending" ? (
-                                                <button
-                                                    onClick={() =>
-                                                        handleCancelOrder(order._id)
-                                                    }
-                                                    className="text-red-500 hover:text-red-400 text-xs"
-                                                >
-                                                    Cancel
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditOrder(order);
+                                                        }}
+                                                        className="text-blue-500 hover:text-blue-400 text-xs flex items-center gap-1"
+                                                    >
+                                                        <Edit2 size={12} />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCancelOrder(order._id);
+                                                        }}
+                                                        className="text-red-500 hover:text-red-400 text-xs"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
                                             ) : (
-                                                <button className="rounded-md bg-white/5 p-2 hover:bg-white/10">
-                                                    <MoreHorizontal size={16} />
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditOrder(order);
+                                                    }}
+                                                    className="rounded-md bg-white/5 p-2 hover:bg-white/10"
+                                                >
+                                                    <Edit2 size={16} />
                                                 </button>
                                             )}
                                         </td>

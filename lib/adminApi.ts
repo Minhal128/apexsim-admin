@@ -82,6 +82,16 @@ export const getMarketFeeds = async (page = 1, limit = 20) => {
     return apiRequest(`/admin/market-feeds?page=${page}&limit=${limit}`);
 };
 
+export const getRealtimeMarketPrices = async () => {
+    return apiRequest('/admin/market-feeds/realtime');
+};
+
+export const refreshMarketPrices = async () => {
+    return apiRequest('/admin/market-feeds/refresh', {
+        method: 'POST',
+    });
+};
+
 export const createMarketFeed = async (feedData: any) => {
     return apiRequest('/admin/market-feeds', {
         method: 'POST',
@@ -131,6 +141,20 @@ export const cancelOrder = async (orderId: string) => {
 export const closeFuturePosition = async (positionId: string) => {
     return apiRequest(`/admin/trades/${positionId}/close`, {
         method: 'POST',
+    });
+};
+
+export const updateTrade = async (tradeId: string, tradeData: any) => {
+    return apiRequest(`/admin/trades/${tradeId}`, {
+        method: 'PUT',
+        body: JSON.stringify(tradeData),
+    });
+};
+
+export const updateTradeStatus = async (tradeId: string, status: string) => {
+    return apiRequest(`/admin/trades/${tradeId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
     });
 };
 

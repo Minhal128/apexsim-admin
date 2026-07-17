@@ -12,7 +12,9 @@ export function initializeSocket(): Socket {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
+        transports: ['websocket'],
+        upgrade: false,
     });
 
     socket.on('connect', () => {

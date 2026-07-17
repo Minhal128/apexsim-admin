@@ -523,7 +523,7 @@ export default function OrderSpot() {
                             </tr>
                         ) : (
                             orders.map((order) => {
-                                const [asset] = order.symbol.split("/");
+                                const [asset] = (order.symbol || '').split("/");
                                 const icon = assetIcons[asset] || "/assets/default.png";
 
                                 return (

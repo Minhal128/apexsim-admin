@@ -78,7 +78,7 @@ export const calculateMarginLevel = (account: AccountBalance): number => {
     const marginUsed = calculateMarginUsed(account.positions);
     
     if (marginUsed === 0) {
-        return 0; // No positions, no margin used
+        return Infinity; // No positions, no margin used
     }
     
     return (equity / marginUsed) * 100;

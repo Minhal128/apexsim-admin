@@ -21,7 +21,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
                 if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
                     window.location.href = '/signin';
                 }
-                throw new Error('Token not found, authorization denied. Please login again.');
+                throw new Error('Token not found, authorization denied.');
             }
         }
     }

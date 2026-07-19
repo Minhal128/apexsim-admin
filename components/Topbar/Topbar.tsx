@@ -139,22 +139,16 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           </div>
 
           <div className="flex items-center justify-center h-10 w-10 rounded-full overflow-hidden border-2 border-[#00B595] bg-[#131315]">
-            {!loading && userProfile?.avatar ? (
+            {!loading ? (
               <Image
-                src={userProfile.avatar}
+                src={userProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName())}&background=00B595&color=fff`}
                 alt="Profile"
                 width={40}
                 height={40}
                 className="object-cover w-full h-full"
-                unoptimized={userProfile.avatar.startsWith('data:')}
+                unoptimized={true}
               />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#00B595] to-[#008570] flex items-center justify-center">
-                <span className="text-white font-bold">
-                  {getDisplayName().charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
           <IoMdArrowDropdown className="h-4 w-4 text-gray-300" />
         </div>

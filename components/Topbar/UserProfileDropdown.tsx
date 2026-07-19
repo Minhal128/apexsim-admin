@@ -117,22 +117,14 @@ export default function UserProfileDropdown({
               onClick={handleAvatarClick}
               className="relative h-14 w-14 rounded-full overflow-hidden border-2 border-[#00B595] bg-[#131315] cursor-pointer flex items-center justify-center hover:opacity-80 transition"
             >
-              {userProfile?.avatar ? (
-                <Image
-                  src={userProfile.avatar}
-                  alt="Profile"
-                  width={56}
-                  height={56}
-                  className="object-cover w-full h-full"
-                  unoptimized={userProfile.avatar.startsWith('data:')}
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#00B595] to-[#008570] flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
-                    {userProfile?.name?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                </div>
-              )}
+              <Image
+                src={userProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "User")}&background=00B595&color=fff`}
+                alt="Profile"
+                width={56}
+                height={56}
+                className="object-cover w-full h-full"
+                unoptimized={true}
+              />
 
               {/* Upload icon overlay */}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">

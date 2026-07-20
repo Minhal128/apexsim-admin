@@ -154,7 +154,7 @@ export default function UserDetailsModal({
         </div>
 
         <div className="overflow-x-auto">
-          <RecenteActivities />
+          <RecenteActivities userId={user._id} />
         </div>
 
         <div className="mt-5 px-5 flex gap-2">

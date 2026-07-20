@@ -1,28 +1,30 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { Search, Filter, Upload, MoreHorizontal } from "lucide-react";
+import { apiRequest } from "@/lib/api";
 
-export default function RecenteActivities() {
-  const users = [
-    {
-      id: "0x5f...a92x68",
-      recipient: "Bessie Cooper",
-      email: "kenzi.lawson@example.com",
-      status: "Successful",
-    },
-    {
-      id: "0x5f...a92x68",
-      recipient: "Annette Black",
-      email: "sara.cruz@example.com",
-      status: "Successful",
-    },
-    {
-      id: "0x5f...a92x68",
-      recipient: "Jacob Jones",
-      email: "willie.jennings@example.com",
-      status: "Successful",
-    },
-  ];
+export default function RecenteActivities({ userId }: { userId?: string }) {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const res = await apiRequest(`/admin/wallet/transactions?userId=${userId}`);
+        const data = res.transactions || res.data || res;
+        setTransactions(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch user transactions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTransactions();
+  }, [userId]);
+
 
   return (
     <div className="rounded-2xl bg-[#0E0D15] border border-white/5">
@@ -69,15 +71,19 @@ export default function RecenteActivities() {
                   <input type="checkbox" />
                 </th>
                 <th className="px-3 py-3 text-left">Transaction ID</th>
-                <th className="px-3 py-3 text-left">Recipient</th>
-                <th className="px-3 py-3 text-left">Email Address</th>
+                <th className="px-3 py-3 text-left">Type</th>
+                <th className="px-3 py-3 text-left">Amount</th>
                 <th className="px-3 py-3 text-left">Status</th>
                 <th className="px-3 py-3 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody className="text-gray-300">
-              {users.map((user, index) => (
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-4">Loading...</td></tr>
+              ) : transactions.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-4">No recent activities.</td></tr>
+              ) : transactions.map((tx, index) => (
                 <tr
                   key={index}
                   className="border-t border-white/5 hover:bg-white/5"
@@ -85,13 +91,17 @@ export default function RecenteActivities() {
                   <td className="px-3 py-4">
                     <input type="checkbox" />
                   </td>
-                  <td className="px-3 py-4 text-white">{user.id}</td>
-                  <td className="px-3 py-4">{user.recipient}</td>
-                  <td className="px-3 py-4 text-gray-400">{user.email}</td>
+                  <td className="px-3 py-4 text-white">
+                    {tx._id.substring(0, 10)}...
+                  </td>
+                  <td className="px-3 py-4 capitalize">{tx.type}</td>
+                  <td className="px-3 py-4 text-gray-400">
+                    {tx.amount} {tx.asset}
+                  </td>
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-[#4DCFA6]" />
-                      <span className="text-xs">{user.status}</span>
+                      <span className={`h-2 w-2 rounded-full ${tx.status === 'completed' || tx.status === 'approved' ? 'bg-[#4DCFA6]' : tx.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                      <span className="text-xs capitalize">{tx.status}</span>
                     </div>
                   </td>
                   <td className="px-3 py-4 text-right">

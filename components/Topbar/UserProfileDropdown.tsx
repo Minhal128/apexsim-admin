@@ -118,7 +118,7 @@ export default function UserProfileDropdown({
               className="relative h-14 w-14 rounded-full overflow-hidden border-2 border-[#00B595] bg-[#131315] cursor-pointer flex items-center justify-center hover:opacity-80 transition"
             >
               <Image
-                src={userProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "User")}&background=00B595&color=fff`}
+                src={userProfile?.avatar && userProfile.avatar.trim() !== "" ? userProfile.avatar : "/assets/profileimg.png"}
                 alt="Profile"
                 width={56}
                 height={56}

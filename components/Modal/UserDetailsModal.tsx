@@ -30,6 +30,9 @@ export default function UserDetailsModal({
   const displayName = user.name && user.name.trim() !== "" ? user.name : "Unknown User";
   const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
+  const totalBalance = user.wallet?.balances?.find((b: any) => b.asset === 'USDT')?.amount || 0;
+  const balances = user.wallet?.balances || [];
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
       <div className="h-full w-full md:max-w-125 bg-[#0E0D15] p-4 animate-slideIn overflow-y-auto">
@@ -79,9 +82,9 @@ export default function UserDetailsModal({
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-gray-400 text-sm font-Manrope">
-                Wallet Balance
+                Wallet Balance (USDT)
               </p>
-              <h3 className="text-2xl text-white font-Manrope">$40,000</h3>
+              <h3 className="text-2xl text-white font-Manrope">${totalBalance.toFixed(2)}</h3>
             </div>
 
             <div className="flex gap-2">
@@ -111,47 +114,42 @@ export default function UserDetailsModal({
 
           {/* Assets List */}
           <div className="space-y-4">
-            {[
-              {
-                icon: BTC,
-                name: "BTC",
-                amount: "0.006467 BTC",
-                value: "$4,000.00",
-              },
-              {
-                icon: ETH,
-                name: "ETH",
-                amount: "6.67 ETH",
-                value: "$4,000.00",
-              },
-              {
-                icon: SOL,
-                name: "SOL",
-                amount: "100 SOL",
-                value: "$4,000.00",
-              },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={item.icon}
-                    alt={item.name}
-                    width={30}
-                    height={30}
-                  />
-                  <div>
-                    <p className="text-sm text-white font-Manrope">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-gray-400 font-Manrope">
-                      {item.amount}
-                    </p>
-                  </div>
-                </div>
+            {balances.length === 0 ? (
+              <p className="text-sm text-gray-400 font-Manrope">No assets found.</p>
+            ) : balances.map((item: any, i: number) => {
+              let icon = BTC;
+              if (item.asset === 'ETH') icon = ETH;
+              else if (item.asset === 'SOL') icon = SOL;
 
-                <p className="text-sm text-white font-Manrope">{item.value}</p>
-              </div>
-            ))}
+              // Usually, real crypto amounts have more decimals. Let's show up to 6.
+              const amountStr = item.amount.toFixed(6) + " " + item.asset;
+              
+              return (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={icon}
+                      alt={item.asset}
+                      width={30}
+                      height={30}
+                    />
+                    <div>
+                      <p className="text-sm text-white font-Manrope">
+                        {item.asset}
+                      </p>
+                      <p className="text-xs text-gray-400 font-Manrope">
+                        {amountStr}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-white font-Manrope">
+                    {/* Assuming $1 for USDT, and we'd need actual prices for others. For now, if USDT, show $amount */}
+                    {item.asset === 'USDT' ? `$${item.amount.toFixed(2)}` : '--'}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 

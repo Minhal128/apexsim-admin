@@ -22,16 +22,21 @@ export default function RecenteActivities() {
         const data = await apiRequest("/admin/users");
         // Handle paginated response: { users: [], pagination: {} }
         const usersList = data.users || data;
-        const mappedUsers = Array.isArray(usersList) ? usersList.map((user: any) => ({
-          id: user._id.substring(0, 8),
-          _id: user._id,
-          name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "",
-          email: user.email,
-          kyc: user.kycStatus || "Verified",
-          balance: "$0.00",
-          joined: new Date(user.createdAt).toLocaleDateString(),
-          status: "Successful",
-        })) : [];
+        const mappedUsers = Array.isArray(usersList) ? usersList.map((user: any) => {
+          const usdtBalance = user.wallet?.balances?.find((b: any) => b.asset === 'USDT')?.amount || 0;
+          
+          return {
+            id: user._id.substring(0, 8),
+            _id: user._id,
+            name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "",
+            email: user.email,
+            kyc: user.kycStatus || "Verified",
+            balance: `$${usdtBalance.toFixed(2)}`,
+            joined: new Date(user.createdAt).toLocaleDateString(),
+            status: "Successful",
+            wallet: user.wallet,
+          };
+        }) : [];
 
         setUsers(mappedUsers);
         if (data.pagination) setTotalUsers(data.pagination.total);

@@ -141,7 +141,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           <div className="flex items-center justify-center h-10 w-10 rounded-full overflow-hidden border-2 border-[#00B595] bg-[#131315]">
             {!loading ? (
               <Image
-                src={userProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName())}&background=00B595&color=fff`}
+                src={userProfile?.avatar && userProfile.avatar.trim() !== "" ? userProfile.avatar : "/assets/profileimg.png"}
                 alt="Profile"
                 width={40}
                 height={40}

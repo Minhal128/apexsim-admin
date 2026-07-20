@@ -12,6 +12,7 @@ import SOL from "@/public/assets/sol.png";
 
 interface Props {
   open: boolean;
+  user?: any;
   onClose: () => void;
   onDeposit: () => void;
   onWithdraw: () => void;
@@ -19,11 +20,15 @@ interface Props {
 
 export default function UserDetailsModal({
   open,
+  user,
   onClose,
   onDeposit,
   onWithdraw,
 }: Props) {
-  if (!open) return null;
+  if (!open || !user) return null;
+
+  const displayName = user.name && user.name.trim() !== "" ? user.name : "Unknown User";
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
@@ -37,19 +42,20 @@ export default function UserDetailsModal({
 
         <div className="flex items-center gap-3 mb-4">
           <Image
-            src={Avatar}
+            src={avatarUrl}
             alt="profile"
             width={48}
             height={48}
             className="rounded-full"
+            unoptimized
           />
 
           <div className="flex-1">
-            <h3 className="text-white font-Manrope">James Dominic</h3>
+            <h3 className="text-white font-Manrope">{displayName}</h3>
 
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-Manrope text-[#828A92] truncate">
-                jamesdom@gmail.com
+                {user.email}
               </p>
 
               <div className="flex items-center  shrink-0">
@@ -58,10 +64,10 @@ export default function UserDetailsModal({
                   United States
                 </span>
                 <span className="text-xs px-1 text-[#828A92]">
-                  ID: #46R70HT9
+                  ID: #{user.id}
                 </span>
-                <span className="px-2 py-0.5 font-Manrope text-sm text-white">
-                  Verified
+                <span className={`px-2 py-0.5 font-Manrope text-sm text-white ${user.kyc === "Verified" ? "text-[#00B595]" : "text-[#FF8D28]"}`}>
+                  {user.kyc}
                 </span>
               </div>
             </div>

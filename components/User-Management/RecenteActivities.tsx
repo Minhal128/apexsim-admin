@@ -9,9 +9,9 @@ import { apiRequest } from "@/lib/api";
 
 export default function RecenteActivities() {
   const [openModal, setOpenModal] = useState(false);
-  const [userDetailsModal, setUserDetailsModal] = useState(false);
   const [depositModal, setDepositModal] = useState(false);
   const [withdrawModal, setWithdrawModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -24,6 +24,8 @@ export default function RecenteActivities() {
         const usersList = data.users || data;
         const mappedUsers = Array.isArray(usersList) ? usersList.map((user: any) => ({
           id: user._id.substring(0, 8),
+          _id: user._id,
+          name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "",
           email: user.email,
           kyc: user.kycStatus || "Verified",
           balance: "$0.00",
@@ -110,7 +112,7 @@ export default function RecenteActivities() {
               ) : users.map((user, index) => (
                 <tr
                   key={index}
-                  onClick={() => setUserDetailsModal(true)}
+                  onClick={() => setSelectedUser(user)}
                   className="border-t border-white/5 cursor-pointer"
                 >
                   <td className="px-3 py-4 font-Manrope">{user.id}</td>
@@ -164,14 +166,15 @@ export default function RecenteActivities() {
 
       {/* USER DETAILS MODAL */}
       <UserDetailsModal
-        open={userDetailsModal}
-        onClose={() => setUserDetailsModal(false)}
+        open={!!selectedUser}
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
         onDeposit={() => {
-          setUserDetailsModal(false);
+          setSelectedUser(null);
           setDepositModal(true);
         }}
         onWithdraw={() => {
-          setUserDetailsModal(false);
+          setSelectedUser(null);
           setWithdrawModal(true);
         }}
       />

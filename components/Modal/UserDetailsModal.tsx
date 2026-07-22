@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { X } from "lucide-react";
 import RecenteActivities from "../Modal/RecenteActivities";
+import { disableUser, resetUserPassword } from "@/lib/adminApi";
 
 import Avatar from "@/public/assets/profileimg.png";
 import USFlag from "@/public/assets/flag.png";
@@ -28,7 +29,7 @@ export default function UserDetailsModal({
   if (!open || !user) return null;
 
   const displayName = user.name && user.name.trim() !== "" ? user.name : "Unknown User";
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+  const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
   const totalBalance = user.wallet?.balances?.find((b: any) => b.asset === 'USDT')?.amount || 0;
   const balances = user.wallet?.balances || [];
@@ -158,10 +159,31 @@ export default function UserDetailsModal({
         </div>
 
         <div className="mt-5 px-5 flex gap-2">
-          <button className="flex-1 rounded-lg cursor-pointer bg-[#FF383C] font-Manrope py-3 text-sm text-white">
+          <button 
+            onClick={async () => {
+              try {
+                await disableUser(user._id);
+                alert("User suspended successfully");
+                onClose();
+              } catch (e) {
+                alert("Failed to suspend user");
+              }
+            }}
+            className="flex-1 rounded-lg cursor-pointer bg-[#FF383C] font-Manrope py-3 text-sm text-white"
+          >
             Suspend user
           </button>
-          <button className="flex-1 rounded-lg bg-[#1F1F26] cursor-pointer font-Manrope py-3 text-sm text-white">
+          <button 
+            onClick={async () => {
+              try {
+                await resetUserPassword(user._id);
+                alert("Password reset to ApexUser@123");
+              } catch (e) {
+                alert("Failed to reset password");
+              }
+            }}
+            className="flex-1 rounded-lg bg-[#1F1F26] cursor-pointer font-Manrope py-3 text-sm text-white"
+          >
             Reset password
           </button>
         </div>

@@ -35,6 +35,12 @@ export const disableUser = async (userId: string) => {
     });
 };
 
+export const resetUserPassword = async (userId: string) => {
+    return apiRequest(`/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+    });
+};
+
 export const enableUser = async (userId: string) => {
     return apiRequest(`/admin/users/${userId}/enable`, {
         method: 'POST',

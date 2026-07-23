@@ -63,13 +63,10 @@ export default function UserDetailsModal({
         </div>
 
         <div className="flex items-center gap-3 mb-4">
-          <Image
+          <img
             src={avatarUrl}
             alt="profile"
-            width={48}
-            height={48}
-            className="rounded-full"
-            unoptimized
+            className="w-12 h-12 rounded-full object-cover"
           />
 
           <div className="flex-1">
@@ -80,10 +77,14 @@ export default function UserDetailsModal({
                 {user.email}
               </p>
 
-              <div className="flex items-center  shrink-0">
-                <ReactCountryFlag countryCode={user.country || "US"} svg style={{ width: '1em', height: '1em' }} />
-                <span className="text-xs pl-1 font-Manrope text-[#828A92]">
-                  {user.country || "United States"}
+              <div className="flex items-center shrink-0 gap-1">
+                {user.country && user.country.length === 2 ? (
+                  <ReactCountryFlag countryCode={user.country} svg style={{ width: '1.2em', height: '1.2em' }} />
+                ) : (
+                  <span className="text-[#828A92] text-xs">🌍</span>
+                )}
+                <span className="text-xs font-Manrope text-[#828A92] mr-2">
+                  {user.country || "Not specified"}
                 </span>
                 <span className="text-xs px-1 text-[#828A92]">
                   ID: #{user.id}

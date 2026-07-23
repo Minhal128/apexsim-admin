@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import MarketDetailModal from "./MarketDetailModal";
 import { toggleMarketFeed, refreshMarketPrices } from "@/lib/adminApi";
 import { apiRequest } from "@/lib/api";
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MoreHorizontal, ArrowUp, ArrowDown } from "lucide-react";
 import Image from "next/image";
 import { apiRequest } from "@/lib/api";
+import { closeFuturePosition, liquidateFuturePosition } from "@/lib/adminApi";
 
 interface FutureOrder {
   _id: string;
@@ -24,6 +25,7 @@ interface FutureOrder {
 export default function FuturePosition() {
   const [orders, setOrders] = useState<FutureOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -89,6 +91,43 @@ export default function FuturePosition() {
       }
     } catch (err) {
       console.error("Failed to fetch market prices:", err);
+    }
+  };
+
+  const handleClose = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await closeFuturePosition(id);
+      fetchFutureOrders();
+    } catch (err: any) {
+      alert(err.message || "Failed to close position");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleLiquidate = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await liquidateFuturePosition(id);
+      fetchFutureOrders();
+    } catch (err: any) {
+      alert(err.message || "Failed to liquidate position");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleForceCloseAll = async () => {
+    if (!confirm("Are you sure you want to close all active futures positions?")) return;
+    try {
+      const pendingOrders = orders.filter(o => o.status.toLowerCase() === "pending");
+      for (const order of pendingOrders) {
+        await closeFuturePosition(order._id);
+      }
+      fetchFutureOrders();
+    } catch (err: any) {
+      alert(err.message || "Failed to close all orders");
     }
   };
 
@@ -220,10 +259,27 @@ export default function FuturePosition() {
                     </span>
                   </td>
                   <td className="px-3 py-4 text-gray-400 text-xs">{order.createdAt}</td>
-                  <td className="px-3 py-4 text-right">
-                    <button className="rounded-md bg-white/5 p-2 hover:bg-white/10">
-                      <MoreHorizontal size={16} />
-                    </button>
+                  <td className="px-3 py-4 text-right relative">
+                    <div className="flex gap-2 justify-end">
+                      {order.status.toLowerCase() === 'pending' && (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleClose(order._id); }}
+                            disabled={actionLoading === order._id}
+                            className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs hover:bg-red-500/20"
+                          >
+                            {actionLoading === order._id ? "..." : "Close"}
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleLiquidate(order._id); }}
+                            disabled={actionLoading === order._id}
+                            className="bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded text-xs hover:bg-yellow-500/20"
+                          >
+                            Liq
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -232,7 +288,10 @@ export default function FuturePosition() {
         </tbody>
 
         <tbody className="text-gray-300">
-          <tr className="bg-[#1F1F26] cursor-pointer rounded-md border-t border-white/5">
+          <tr 
+            onClick={handleForceCloseAll}
+            className="bg-[#1F1F26] cursor-pointer rounded-md border-t border-white/5 hover:bg-white/10"
+          >
             <td
               colSpan={11}
               className="text-center text-gray-200 py-4 font-Manrope"

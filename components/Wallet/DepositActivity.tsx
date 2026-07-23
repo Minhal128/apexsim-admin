@@ -44,29 +44,7 @@ export default function DepositActivity() {
     } catch (err: any) {
       console.error("Error fetching deposits:", err);
       setError(err.message || "Failed to load deposits");
-      // Fallback mock data
-      setDeposits([
-        {
-          _id: "1",
-          tx: "0x5f...a92x68",
-          recipient: "Tanya Hill",
-          email: "tanya.hill@example.com",
-          assets: ["BTC"],
-          amount: "0.0564 BTC",
-          time: "2/11/12",
-          status: "Successful",
-        },
-        {
-          _id: "2",
-          tx: "0x3a...b71x34",
-          recipient: "James Smith",
-          email: "james.smith@example.com",
-          assets: ["ETH"],
-          amount: "1.234 ETH",
-          time: "3/12/12",
-          status: "Pending",
-        },
-      ]);
+      setDeposits([]);
     } finally {
       setLoading(false);
     }
@@ -78,7 +56,7 @@ export default function DepositActivity() {
       await approveDeposit(deprecitId);
       setDeposits(
         deposits.map((deposit) =>
-          deposit._id === deprecitId ? { ...deposit, status: "Successful" } : deposit
+          deposit._id === deprecitId ? { ...deposit, status: "completed" } : deposit
         )
       );
       alert("Deposit approved!");
@@ -98,7 +76,7 @@ export default function DepositActivity() {
       await rejectDeposit(depositId, reason);
       setDeposits(
         deposits.map((deposit) =>
-          deposit._id === depositId ? { ...deposit, status: "Failed" } : deposit
+          deposit._id === depositId ? { ...deposit, status: "rejected" } : deposit
         )
       );
       alert("Deposit rejected!");
@@ -182,20 +160,20 @@ export default function DepositActivity() {
                   <td className="px-3 py-4">
                     <span
                       className={`rounded-lg px-3 py-1 text-xs text-white ${
-                        deposit.status === "Successful"
+                        deposit.status.toLowerCase() === "completed" || deposit.status.toLowerCase() === "successful"
                           ? "bg-[#4DCFA6]"
-                          : deposit.status === "Pending"
+                          : deposit.status.toLowerCase() === "pending"
                             ? "bg-[#FF8D28]"
                             : "bg-red-500"
                       }`}
                     >
-                      {deposit.status}
+                      {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
                     </span>
                   </td>
 
                   <td className="px-3 py-4 text-right">
                     <div className="flex gap-2 justify-end">
-                      {deposit.status === "Pending" && (
+                      {deposit.status.toLowerCase() === "pending" && (
                         <>
                           <button
                             onClick={() => handleApproveDeposit(deposit._id)}

@@ -44,29 +44,7 @@ export default function WithdrawActivity() {
     } catch (err: any) {
       console.error("Error fetching withdrawals:", err);
       setError(err.message || "Failed to load withdrawals");
-      // Fallback mock data
-      setWithdrawals([
-        {
-          _id: "1",
-          tx: "0x5f...a92x68",
-          recipient: "Tanya Hill",
-          email: "tanya.hill@example.com",
-          assets: ["BTC"],
-          amount: "0.0564 BTC",
-          time: "2/11/12",
-          status: "Successful",
-        },
-        {
-          _id: "2",
-          tx: "0x3a...b71x34",
-          recipient: "James Smith",
-          email: "james.smith@example.com",
-          assets: ["ETH"],
-          amount: "1.234 ETH",
-          time: "3/12/12",
-          status: "Pending",
-        },
-      ]);
+      setWithdrawals([]);
     } finally {
       setLoading(false);
     }
@@ -78,7 +56,7 @@ export default function WithdrawActivity() {
       await approveWithdrawal(withdrawalId);
       setWithdrawals(
         withdrawals.map((withdrawal) =>
-          withdrawal._id === withdrawalId ? { ...withdrawal, status: "Successful" } : withdrawal
+          withdrawal._id === withdrawalId ? { ...withdrawal, status: "completed" } : withdrawal
         )
       );
       alert("Withdrawal approved!");
@@ -98,7 +76,7 @@ export default function WithdrawActivity() {
       await rejectWithdrawal(withdrawalId, reason);
       setWithdrawals(
         withdrawals.map((withdrawal) =>
-          withdrawal._id === withdrawalId ? { ...withdrawal, status: "Failed" } : withdrawal
+          withdrawal._id === withdrawalId ? { ...withdrawal, status: "rejected" } : withdrawal
         )
       );
       alert("Withdrawal rejected!");
@@ -182,20 +160,20 @@ export default function WithdrawActivity() {
                   <td className="px-3 py-4">
                     <span
                       className={`rounded-lg px-3 py-1 text-xs text-white ${
-                        withdrawal.status === "Successful"
+                        withdrawal.status.toLowerCase() === "completed" || withdrawal.status.toLowerCase() === "successful"
                           ? "bg-[#4DCFA6]"
-                          : withdrawal.status === "Pending"
+                          : withdrawal.status.toLowerCase() === "pending"
                             ? "bg-[#FF8D28]"
                             : "bg-red-500"
                       }`}
                     >
-                      {withdrawal.status}
+                      {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
                     </span>
                   </td>
 
                   <td className="px-3 py-4 text-right">
                     <div className="flex gap-2 justify-end">
-                      {withdrawal.status === "Pending" && (
+                      {withdrawal.status.toLowerCase() === "pending" && (
                         <>
                           <button
                             onClick={() => handleApproveWithdrawal(withdrawal._id)}

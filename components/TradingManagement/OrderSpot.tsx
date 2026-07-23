@@ -179,11 +179,21 @@ export default function OrderSpot() {
 
     const handleCancelOrder = async (orderId: string) => {
         try {
-            await apiRequest(`/trading/cancel/${orderId}`, { method: "POST" });
+            await apiRequest(`/admin/trades/${orderId}/cancel`, { method: "POST" });
             fetchTrades();
         } catch (err) {
             console.error("Failed to cancel order:", err);
             alert("Failed to cancel order");
+        }
+    };
+
+    const handleCloseOrder = async (orderId: string) => {
+        try {
+            await updateTrade(orderId, { status: "completed" });
+            fetchTrades();
+        } catch (err) {
+            console.error("Failed to close order:", err);
+            alert("Failed to close order");
         }
     };
 
@@ -598,6 +608,15 @@ export default function OrderSpot() {
                                         <td className="px-3 py-4 text-right">
                                             {order.status === "pending" ? (
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCloseOrder(order._id);
+                                                        }}
+                                                        className="text-green-500 hover:text-green-400 text-xs mr-2"
+                                                    >
+                                                        Complete
+                                                    </button>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();

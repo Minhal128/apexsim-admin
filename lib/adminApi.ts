@@ -151,6 +151,12 @@ export const closeFuturePosition = async (positionId: string) => {
     });
 };
 
+export const liquidateFuturePosition = async (positionId: string) => {
+    return apiRequest(`/admin/trades/${positionId}/liquidate`, {
+        method: 'POST',
+    });
+};
+
 export const updateTrade = async (tradeId: string, tradeData: any) => {
     return apiRequest(`/admin/trades/${tradeId}`, {
         method: 'PUT',

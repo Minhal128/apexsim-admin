@@ -1,4 +1,22 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
+
 export default function OperationalQueues() {
+  const [queues, setQueues] = useState({ pendingKyc: 0, pendingWithdrawals: 0, flaggedDeposits: 0 });
+
+  useEffect(() => {
+    const fetchQueues = async () => {
+      try {
+        const data = await apiRequest("/admin/queues");
+        setQueues(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchQueues();
+  }, []);
   return (
     <div className="rounded-xl bg-[#0E0D15] py-6 px-4">
       {/* Header */}
@@ -14,7 +32,7 @@ export default function OperationalQueues() {
               Pending KYC Approvals
             </p>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#22202C] text-xs text-[#0055FF]">
-              3
+              {queues.pendingKyc}
             </span>
           </div>
 
@@ -30,7 +48,7 @@ export default function OperationalQueues() {
               Pending Withdrawals
             </p>
             <span className="flex h-5 w-5 items-cente font-Manroper justify-center rounded-full bg-[#22202C] text-xs text-[#0055FF]">
-              5
+              {queues.pendingWithdrawals}
             </span>
           </div>
 
@@ -46,7 +64,7 @@ export default function OperationalQueues() {
               Flagged Suspicious Deposits
             </p>
             <span className="flex h-5 w-5 items-center font-Manrope justify-center rounded-full bg-[#22202C] text-xs text-red-800">
-              2
+              {queues.flaggedDeposits}
             </span>
           </div>
 

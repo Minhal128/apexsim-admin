@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
+import { apiRequest } from "@/lib/api";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -13,15 +14,38 @@ interface ActivityTrendChartProps {
 }
 
 export default function TransactionChart({
-  currentValue = 300095,
   percentageChange = 4.9,
 }: ActivityTrendChartProps) {
   const [month, setMonth] = useState("September");
   const [isOpen, setIsOpen] = useState(false);
+  const [chartData, setChartData] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+  const [currentValue, setCurrentValue] = useState(0);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ 100% Fix: ResizeObserver ensures chart redraws on container size changes
+  useEffect(() => {
+    const fetchCharts = async () => {
+      try {
+        const data = await apiRequest("/admin/charts");
+        
+        const vols = data.data.map((d: any) => d.volume);
+        setChartData(vols);
+        
+        const lbls = data.data.map((d: any) => {
+           const dt = new Date(d.time);
+           return `${dt.toLocaleString('default', { month: 'short' })}${dt.getDate()}`;
+        });
+        setLabels(lbls);
+        
+        setCurrentValue(vols[vols.length - 1] || 0);
+      } catch (err) {
+        console.error("Failed to fetch charts:", err);
+      }
+    };
+    fetchCharts();
+  }, []);
+
   useLayoutEffect(() => {
     if (!containerRef.current || typeof ResizeObserver === "undefined") return;
 
@@ -35,33 +59,6 @@ export default function TransactionChart({
   }, []);
 
   const months = ["September", "August", "July"];
-
-  const generateDailyLabels = () => {
-    const labels = [];
-    for (let day = 10; day <= 21; day++) {
-      labels.push(`Sept${day}`);
-    }
-    return labels;
-  };
-
-  const generateSeriesData = () => {
-    const data = [];
-    const baseValue = 300000;
-
-    for (let i = 0; i < 12; i++) {
-      const isWeekend = i === 4 || i === 5 || i === 10 || i === 11;
-      const variation = isWeekend
-        ? Math.random() * 30000 - 40000
-        : Math.random() * 40000 - 10000;
-
-      const value = Math.max(
-        250000,
-        Math.min(350000, Math.round(baseValue + variation)),
-      );
-      data.push(value);
-    }
-    return data;
-  };
 
   const chartOptions: ApexOptions = {
     chart: {
@@ -84,12 +81,12 @@ export default function TransactionChart({
     series: [
       {
         name: "Daily Activity",
-        data: generateSeriesData(),
+        data: chartData.length > 0 ? chartData : [0],
       },
     ],
 
     xaxis: {
-      categories: generateDailyLabels(),
+      categories: labels.length > 0 ? labels : [""],
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: {
@@ -109,8 +106,6 @@ export default function TransactionChart({
           fontSize: "11px",
         },
       },
-      min: 250000,
-      max: 350000,
       tickAmount: 5,
     },
 

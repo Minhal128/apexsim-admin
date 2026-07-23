@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import ReactCountryFlag from "react-country-flag";
 import RecenteActivities from "../Modal/RecenteActivities";
-import { disableUser, resetUserPassword } from "@/lib/adminApi";
+import { disableUser, enableUser, resetUserPassword } from "@/lib/adminApi";
 
 import Avatar from "@/public/assets/profileimg.png";
 import USFlag from "@/public/assets/flag.png";
@@ -26,7 +28,23 @@ export default function UserDetailsModal({
   onDeposit,
   onWithdraw,
 }: Props) {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setIsSuspended(user.isActive === false);
+    }
+  }, [user]);
+
   if (!open || !user) return null;
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const displayName = user.name && user.name.trim() !== "" ? user.name : "Unknown User";
   const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
@@ -63,9 +81,9 @@ export default function UserDetailsModal({
               </p>
 
               <div className="flex items-center  shrink-0">
-                <Image src={USFlag} alt="US" width={16} height={16} />
+                <ReactCountryFlag countryCode={user.country || "US"} svg style={{ width: '1em', height: '1em' }} />
                 <span className="text-xs pl-1 font-Manrope text-[#828A92]">
-                  United States
+                  {user.country || "United States"}
                 </span>
                 <span className="text-xs px-1 text-[#828A92]">
                   ID: #{user.id}
@@ -158,35 +176,69 @@ export default function UserDetailsModal({
           <RecenteActivities userId={user._id} />
         </div>
 
-        <div className="mt-5 px-5 flex gap-2">
-          <button 
-            onClick={async () => {
-              try {
-                await disableUser(user._id);
-                alert("User suspended successfully");
-                onClose();
-              } catch (e) {
-                alert("Failed to suspend user");
-              }
-            }}
-            className="flex-1 rounded-lg cursor-pointer bg-[#FF383C] font-Manrope py-3 text-sm text-white"
-          >
-            Suspend user
-          </button>
-          <button 
-            onClick={async () => {
-              try {
-                await resetUserPassword(user._id);
-                alert("Password reset to ApexUser@123");
-              } catch (e) {
-                alert("Failed to reset password");
-              }
-            }}
-            className="flex-1 rounded-lg bg-[#1F1F26] cursor-pointer font-Manrope py-3 text-sm text-white"
-          >
-            Reset password
-          </button>
+        <div className="mt-5 px-5 flex flex-col gap-2">
+          {showPasswordInput && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="New Password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="flex-1 bg-[#1F1F26] text-white text-sm px-4 py-2 rounded-lg border border-[#434B5C]"
+              />
+              <button
+                onClick={async () => {
+                  try {
+                    const newPass = passwordInput || "ApexUser@123";
+                    await resetUserPassword(user._id, newPass);
+                    showToast(`Password reset to ${newPass}`);
+                    setShowPasswordInput(false);
+                    setPasswordInput("");
+                  } catch (e) {
+                    showToast("Failed to reset password");
+                  }
+                }}
+                className="bg-[#00B595] text-white text-sm px-4 py-2 rounded-lg"
+              >
+                Confirm
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button 
+              onClick={async () => {
+                try {
+                  if (isSuspended) {
+                    await enableUser(user._id);
+                    setIsSuspended(false);
+                    showToast("User unsuspended successfully");
+                  } else {
+                    await disableUser(user._id);
+                    setIsSuspended(true);
+                    showToast("User suspended successfully");
+                  }
+                } catch (e) {
+                  showToast("Action failed");
+                }
+              }}
+              className={`flex-1 rounded-lg cursor-pointer font-Manrope py-3 text-sm text-white ${isSuspended ? 'bg-[#00B595]' : 'bg-[#FF383C]'}`}
+            >
+              {isSuspended ? "Unsuspend user" : "Suspend user"}
+            </button>
+            <button 
+              onClick={() => setShowPasswordInput(!showPasswordInput)}
+              className="flex-1 rounded-lg bg-[#1F1F26] cursor-pointer font-Manrope py-3 text-sm text-white"
+            >
+              Reset password
+            </button>
+          </div>
         </div>
+
+        {toastMessage && (
+          <div className="fixed bottom-10 right-10 bg-[#00B595] text-white px-6 py-3 rounded-lg shadow-lg z-[60] font-Manrope animate-slideIn">
+            {toastMessage}
+          </div>
+        )}
       </div>
 
       <style jsx>{`

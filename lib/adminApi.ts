@@ -35,9 +35,10 @@ export const disableUser = async (userId: string) => {
     });
 };
 
-export const resetUserPassword = async (userId: string) => {
+export const resetUserPassword = async (userId: string, password?: string) => {
     return apiRequest(`/admin/users/${userId}/reset-password`, {
         method: 'POST',
+        body: JSON.stringify({ password }),
     });
 };
 

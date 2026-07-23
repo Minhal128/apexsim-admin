@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import MarketDetailModal from "./MarketDetailModal";
-import { getMarketFeeds, toggleMarketFeed, getRealtimeMarketPrices, refreshMarketPrices } from "@/lib/adminApi";
+import { toggleMarketFeed, refreshMarketPrices } from "@/lib/adminApi";
+import { apiRequest } from "@/lib/api";
 
 interface Market {
   _id?: string;
@@ -58,18 +58,29 @@ export default function MarketTable() {
 
   const fetchRealtimePrices = async () => {
     try {
-      const data = await getRealtimeMarketPrices();
-      if (data && data.prices) {
+      const data = await apiRequest("/market/prices");
+      if (data) {
+        const priceMap: Record<string, any> = {};
+        if (Array.isArray(data)) {
+          data.forEach((p: any) => {
+            priceMap[p.symbol] = p;
+          });
+        } else {
+          Object.keys(data).forEach((symbol) => {
+            priceMap[symbol] = data[symbol];
+          });
+        }
+        
         // Update prices without full reload
         setMarkets(prevMarkets => 
           prevMarkets.map(market => {
-            const updatedPrice = data.prices[market.pair] || data.prices[market.asset];
+            const updatedPrice = priceMap[market.asset] || priceMap[market.asset + 'USDT'] || priceMap[market.symbol || ''];
             if (updatedPrice) {
               return {
                 ...market,
-                price: updatedPrice.price || market.price,
-                change: updatedPrice.change24h || market.change,
-                changeUp: updatedPrice.change24h ? parseFloat(String(updatedPrice.change24h)) >= 0 : market.changeUp,
+                price: updatedPrice.price || updatedPrice.usd || market.price,
+                change: updatedPrice.change24h || updatedPrice.usd_24h_change || market.change,
+                changeUp: (updatedPrice.change24h || updatedPrice.usd_24h_change || 0) >= 0,
                 lastUpdate: new Date().toLocaleTimeString(),
               };
             }
@@ -79,7 +90,7 @@ export default function MarketTable() {
         setLastUpdated(new Date());
       }
     } catch (err) {
-      console.error("Failed to fetch realtime prices:", err);
+      console.error("Failed to fetch real-time prices:", err);
     }
   };
 
@@ -99,41 +110,47 @@ export default function MarketTable() {
   const fetchMarkets = async () => {
     setLoading(true);
     try {
-      const data = await getMarketFeeds(1, 50);
-      const marketsList = data.feeds || data.data || data || [];
+      const data = await apiRequest("/market/prices");
       
-      // Transform API data to match UI structure with real market prices
-      const transformedMarkets = Array.isArray(marketsList)
-        ? marketsList.map((market: any) => ({
-            _id: market._id || market.id,
-            asset: market.symbol || market.asset || market.pair?.split("/")[0],
-            pair: market.pair || `${market.symbol || market.asset}/USDT`,
-            price: market.price || market.currentPrice || "0.00",
-            change: market.change || market.change24h || "0",
-            changeUp: market.change ? parseFloat(String(market.change)) >= 0 : false,
-            icon: market.icon || "/assets/crypto.png",
-            feed: {
-              name: market.feedSource || market.feed?.name || "CoinGecko",
-              icon: market.feedIcon || "/assets/bi.png",
-            },
-            lastUpdate: market.lastUpdate || new Date().toLocaleTimeString(),
-            status: market.enabled !== false,
-          }))
-        : [];
+      let priceArray: any[] = [];
+      if (Array.isArray(data)) {
+        priceArray = data;
+      } else if (data && typeof data === 'object') {
+        priceArray = Object.keys(data).map(symbol => ({
+          symbol: symbol,
+          ...data[symbol]
+        }));
+      }
 
-      setMarkets(transformedMarkets);
+      const transformedMarkets = priceArray.map((market: any) => {
+        const symbol = market.symbol || market.id || "UNKNOWN";
+        const price = market.price || market.usd || market.value || 0;
+        const change = market.change24h || market.usd_24h_change || market.change || 0;
+        
+        return {
+          _id: symbol,
+          asset: symbol,
+          pair: `${symbol}/USDT`,
+          price: price,
+          change: change,
+          changeUp: parseFloat(String(change)) >= 0,
+          icon: "/assets/crypto.png",
+          feed: {
+            name: "CoinGecko",
+            icon: "/assets/bi.png",
+          },
+          lastUpdate: new Date().toLocaleTimeString(),
+          status: true,
+        };
+      });
+
+      setMarkets(transformedMarkets.length > 0 ? transformedMarkets : []);
       setLastUpdated(new Date());
       setError("");
     } catch (err: any) {
       console.error("Error fetching markets:", err);
       const errorMessage = err.message || "Failed to load market feeds";
-      
-      // Only show error if it's not a token issue (already handled in api.ts)
-      if (!errorMessage.includes('Token not found') && !errorMessage.includes('authorization denied')) {
-        setError(errorMessage);
-      }
-      
-      // Don't use fallback mock data - let the backend provide real data
+      setError(errorMessage);
       setMarkets([]);
     } finally {
       setLoading(false);

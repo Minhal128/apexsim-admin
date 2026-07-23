@@ -226,12 +226,12 @@ export default function FuturePosition() {
                       {order.side === "buy" ? "Buy" : "Sell"}
                     </button>
                   </td>
-                  <td className="px-3 py-4">${order.entryPrice.toFixed(4)}</td>
-                  <td className="px-3 py-4">${currentPrice.toFixed(4)}</td>
+                  <td className="px-3 py-4">${(order.entryPrice || 0).toFixed(4)}</td>
+                  <td className="px-3 py-4">${(currentPrice || 0).toFixed(4)}</td>
                   
                   <td className="px-3 py-4 flex flex-col gap-1 text-xs font-Manrope">
                     <span className={pnlUp ? "text-green-500" : "text-red-500"}>
-                      {pnlUp ? "+" : ""}{computedPnl.toFixed(2)} USDT
+                      {pnlUp ? "+" : ""}{(computedPnl || 0).toFixed(2)} USDT
                     </span>
                     <div className="flex items-center gap-1">
                       {pnlUp ? (
@@ -240,7 +240,7 @@ export default function FuturePosition() {
                         <ArrowDown size={12} className="text-red-500" />
                       )}
                       <span className={pnlUp ? "text-green-500" : "text-red-500"}>
-                        {computedPnlPercent.toFixed(2)}%
+                        {(computedPnlPercent || 0).toFixed(2)}%
                       </span>
                     </div>
                   </td>

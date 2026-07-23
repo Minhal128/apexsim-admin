@@ -1,14 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Loader, Check, X } from "lucide-react";
 import Image from "next/image";
-import { getWithdrawActivities } from "@/lib/adminApi";
+import { getWithdrawActivities, approveWithdrawal, rejectWithdrawal } from "@/lib/adminApi";
 
 export default function WithdrawHistory() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleApproveWithdrawal = async (withdrawalId: string) => {
+    setActionLoading(withdrawalId);
+    try {
+      await approveWithdrawal(withdrawalId);
+      setWithdrawals(
+        withdrawals.map((withdrawal) =>
+          withdrawal._id === withdrawalId || withdrawal.withdrawalId === withdrawalId ? { ...withdrawal, status: "completed" } : withdrawal
+        )
+      );
+      alert("Withdrawal approved!");
+    } catch (err: any) {
+      alert("Failed to approve: " + err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectWithdrawal = async (withdrawalId: string) => {
+    const reason = prompt("Enter rejection reason:");
+    if (!reason) return;
+    
+    setActionLoading(withdrawalId);
+    try {
+      await rejectWithdrawal(withdrawalId, reason);
+      setWithdrawals(
+        withdrawals.map((withdrawal) =>
+          withdrawal._id === withdrawalId || withdrawal.withdrawalId === withdrawalId ? { ...withdrawal, status: "rejected" } : withdrawal
+        )
+      );
+      alert("Withdrawal rejected!");
+    } catch (err: any) {
+      alert("Failed to reject: " + err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   useEffect(() => {
     const fetchWithdrawals = async () => {
@@ -111,9 +149,33 @@ export default function WithdrawHistory() {
 
               {/* Actions */}
               <td className="px-3 py-4 text-right">
-                <button className="rounded-md bg-white/5 p-2 hover:bg-white/10">
-                  <MoreHorizontal size={16} />
-                </button>
+                <div className="flex gap-2 justify-end">
+                  {(item.status === 'pending' || item.status === 'Pending') && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleApproveWithdrawal(item._id || item.withdrawalId); }}
+                        disabled={actionLoading === (item._id || item.withdrawalId)}
+                        className="rounded-md bg-green-500/20 p-2 hover:bg-green-500/40 text-green-400 disabled:opacity-50"
+                      >
+                        {actionLoading === (item._id || item.withdrawalId) ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <Check size={16} />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRejectWithdrawal(item._id || item.withdrawalId); }}
+                        disabled={actionLoading === (item._id || item.withdrawalId)}
+                        className="rounded-md bg-red-500/20 p-2 hover:bg-red-500/40 text-red-400 disabled:opacity-50"
+                      >
+                        <X size={16} />
+                      </button>
+                    </>
+                  )}
+                  <button className="rounded-md bg-white/5 p-2 hover:bg-white/10">
+                    <MoreHorizontal size={16} />
+                  </button>
+                </div>
               </td>
             </tr>
             );

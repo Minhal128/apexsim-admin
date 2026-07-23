@@ -1,14 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Check, Loader } from "lucide-react";
 import Image from "next/image";
-import { getTrades } from "@/lib/adminApi";
+import { getTrades, updateTrade } from "@/lib/adminApi";
 
 export default function TradeHistory() {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleCompleteTrade = async (tradeId: string) => {
+    setActionLoading(tradeId);
+    try {
+      await updateTrade(tradeId, { status: 'completed' });
+      setTrades(
+        trades.map((trade) =>
+          trade._id === tradeId || trade.tradeId === tradeId ? { ...trade, status: "completed" } : trade
+        )
+      );
+      alert("Trade completed!");
+    } catch (err: any) {
+      alert("Failed to update trade: " + err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   useEffect(() => {
     const fetchTrades = async () => {
@@ -136,9 +154,24 @@ export default function TradeHistory() {
               </td>
 
               <td className="px-3 py-4 text-right">
-                <button className="rounded-md font-Manrope bg-white/5 p-2 hover:bg-white/10">
-                  <MoreHorizontal size={16} />
-                </button>
+                <div className="flex gap-2 justify-end">
+                  {(trade.status === 'pending' || trade.status === 'Pending') && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCompleteTrade(trade._id || trade.tradeId); }}
+                      disabled={actionLoading === (trade._id || trade.tradeId)}
+                      className="rounded-md bg-green-500/20 p-2 hover:bg-green-500/40 text-green-400 disabled:opacity-50"
+                    >
+                      {actionLoading === (trade._id || trade.tradeId) ? (
+                        <Loader size={16} className="animate-spin" />
+                      ) : (
+                        <Check size={16} />
+                      )}
+                    </button>
+                  )}
+                  <button className="rounded-md font-Manrope bg-white/5 p-2 hover:bg-white/10">
+                    <MoreHorizontal size={16} />
+                  </button>
+                </div>
               </td>
             </tr>
             );

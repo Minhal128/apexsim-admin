@@ -15,16 +15,13 @@ export default function TradeHistory() {
       try {
         setLoading(true);
         const response = await getTrades(1, 50);
-        if (response?.data) {
-          setTrades(response.data);
-        } else {
-          setTrades(mockTrades);
-        }
+        const tradesList = response.trades || response.data || response || [];
+        setTrades(Array.isArray(tradesList) ? tradesList : []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch trades:', err);
-        setTrades(mockTrades);
-        setError('Using demo data');
+        setTrades([]);
+        setError('Failed to fetch trades');
       } finally {
         setLoading(false);
       }
@@ -32,80 +29,7 @@ export default function TradeHistory() {
     fetchTrades();
   }, []);
 
-  const mockTrades = [
-    {
-      tradeId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      pair: ["BTC"],
-      type: "Limit",
-      side: "Long",
-      price: "0.0383 BTC",
-      quantity: "0.39393",
-      pnl: "+0.2%",
-      pnlUp: true,
-      executedAt: "2/11/12 09:16AM",
-    },
-    {
-      tradeId: "0x3a...b71x34",
-      userId: "James Smith",
-      pair: ["ETH"],
-      type: "Market",
-      side: "Short",
-      price: "1.234 ETH",
-      quantity: "1.2",
-      pnl: "-0.2%",
-      pnlUp: false,
-      executedAt: "3/12/12 10:45AM",
-    },
-    {
-      tradeId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      pair: ["USDT"],
-      type: "Limit",
-      side: "Long",
-      price: "500 USDT",
-      quantity: "10",
-      pnl: "+0.5%",
-      pnlUp: true,
-      executedAt: "4/01/23 11:20AM",
-    },
-    {
-      tradeId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      pair: ["BTC"],
-      type: "Limit",
-      side: "Long",
-      price: "0.0383 BTC",
-      quantity: "0.39393",
-      pnl: "+0.2%",
-      pnlUp: true,
-      executedAt: "2/11/12 09:16AM",
-    },
-    {
-      tradeId: "0x3a...b71x34",
-      userId: "James Smith",
-      pair: ["ETH"],
-      type: "Market",
-      side: "Short",
-      price: "1.234 ETH",
-      quantity: "1.2",
-      pnl: "-0.2%",
-      pnlUp: false,
-      executedAt: "3/12/12 10:45AM",
-    },
-    {
-      tradeId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      pair: ["USDT"],
-      type: "Limit",
-      side: "Long",
-      price: "500 USDT",
-      quantity: "10",
-      pnl: "+0.5%",
-      pnlUp: true,
-      executedAt: "4/01/23 11:20AM",
-    },
-  ];
+
 
   if (loading) {
     return (
@@ -140,16 +64,23 @@ export default function TradeHistory() {
         </thead>
 
         <tbody className="text-gray-300">
+          {trades.length === 0 && (
+            <tr>
+              <td colSpan={10} className="px-3 py-4 text-center text-gray-400">
+                No trades found
+              </td>
+            </tr>
+          )}
           {trades.map((trade, index) => {
-            const pair = Array.isArray(trade.pair) ? trade.pair[0] : trade.pair || 'BTC';
+            const pair = Array.isArray(trade.pair) ? trade.pair[0] : (trade.pair || trade.symbol || 'BTC');
             const assetName = typeof pair === 'string' ? pair.split('/')[0] : pair;
             return (
             <tr
               key={index}
               className="border-t cursor-pointer font-Manrope border-white/5 hover:bg-white/5"
             >
-              <td className="px-3 py-4 font-Manrope text-xs">{trade._id || trade.tradeId || 'N/A'}</td>
-              <td className="px-3 py-4 font-Manrope text-xs">{trade.userId || 'N/A'}</td>
+              <td className="px-3 py-4 font-Manrope text-xs">{trade._id ? trade._id.substring(0,8) + '...' : trade.tradeId || 'N/A'}</td>
+              <td className="px-3 py-4 font-Manrope text-xs">{trade.userId?.name || trade.userId || 'N/A'}</td>
 
               {/* Pair column */}
               <td className="px-3 py-4">
@@ -167,7 +98,7 @@ export default function TradeHistory() {
                 </div>
               </td>
 
-              <td className="px-3 py-4 text-xs">{trade.tradeType || 'Limit'}</td>
+              <td className="px-3 py-4 text-xs capitalize">{trade.type || trade.tradeType || 'Limit'}</td>
 
               {/* Side Button */}
               <td className="px-3 py-4">
@@ -178,15 +109,15 @@ export default function TradeHistory() {
                       : "bg-[#FF383C] text-white"
                   }`}
                 >
-                  {trade.side || 'Long'}
+                  {trade.side || trade.type || 'Long'}
                 </button>
               </td>
 
               <td className="px-3 py-4 text-white font-Manrope text-xs">
-                {trade.entryPrice || trade.price || 'N/A'}
+                {trade.price || trade.entryPrice || 'N/A'}
               </td>
               <td className="px-3 py-4 text-white font-Manrope text-xs">
-                {trade.quantity || 'N/A'}
+                {trade.amount || trade.quantity || 'N/A'}
               </td>
 
               {/* PnL Column */}
@@ -196,7 +127,7 @@ export default function TradeHistory() {
                     trade.pnl && parseFloat(trade.pnl) >= 0 ? "text-green-500" : "text-red-500"
                   }
                 >
-                  {trade.pnl || '+0.0%'}
+                  {trade.pnlPercent ? `${trade.pnlPercent}%` : trade.pnl || '+0.0%'}
                 </span>
               </td>
 

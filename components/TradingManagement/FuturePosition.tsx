@@ -171,7 +171,7 @@ export default function FuturePosition() {
             </tr>
           ) : (
             orders.map((order, index) => {
-              const [asset] = order.symbol.split('/');
+              const [asset] = (order.symbol || '').split('/');
               
               // Dynamic PnL Calculation
               const currentPrice = marketPrices[order.symbol] || order.currentPrice || order.entryPrice;

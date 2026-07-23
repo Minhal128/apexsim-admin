@@ -93,26 +93,26 @@ export default function DepositHistory() {
               </td>
 
               <td className="px-3 py-4 text-white font-Manrope">
-                {deposit.amount || 'N/A'}
+                {item.amount || 'N/A'}
               </td>
 
               {/* Status Badge */}
               <td className="px-3 py-4">
                 <span
                   className={`px-3 py-1 rounded-md text-xs font-Manrope text-white ${
-                    deposit.status === 'approved' || deposit.status === 'Approved'
+                    item.status === 'approved' || item.status === 'Approved'
                       ? "bg-[#00B595]"
-                      : deposit.status === 'pending' || deposit.status === 'Pending'
+                      : item.status === 'pending' || item.status === 'Pending'
                       ? "bg-[#FF8D28]"
                       : "bg-[#FF383C]"
                   }`}
                 >
-                  {deposit.status || 'Pending'}
+                  {item.status || 'Pending'}
                 </span>
               </td>
 
               <td className="px-3 py-4 font-Manrope text-gray-400 text-xs">
-                {deposit.createdAt ? new Date(deposit.createdAt).toLocaleString() : 'N/A'}
+                {item.createdAt ? new Date(item.createdAt).toLocaleString() : 'N/A'}
               </td>
 
               <td className="px-3 py-4 text-right">

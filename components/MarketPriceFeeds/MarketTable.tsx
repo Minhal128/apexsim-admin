@@ -100,7 +100,7 @@ export default function MarketTable() {
     setLoading(true);
     try {
       const data = await getMarketFeeds(1, 50);
-      const marketsList = data.data || data || [];
+      const marketsList = data.feeds || data.data || data || [];
       
       // Transform API data to match UI structure with real market prices
       const transformedMarkets = Array.isArray(marketsList)

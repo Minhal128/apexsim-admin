@@ -15,16 +15,13 @@ export default function WithdrawHistory() {
       try {
         setLoading(true);
         const response = await getWithdrawActivities(1, 50);
-        if (response?.data) {
-          setWithdrawals(response.data);
-        } else {
-          setWithdrawals(mockWithdrawals);
-        }
+        const withdrawalsList = response.withdrawals || response.data || response || [];
+        setWithdrawals(Array.isArray(withdrawalsList) ? withdrawalsList : []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch withdrawals:', err);
-        setWithdrawals(mockWithdrawals);
-        setError('Using demo data');
+        setWithdrawals([]);
+        setError('Failed to fetch withdrawals');
       } finally {
         setLoading(false);
       }
@@ -32,68 +29,7 @@ export default function WithdrawHistory() {
     fetchWithdrawals();
   }, []);
 
-  const mockWithdrawals = [
-    {
-      withdrawalId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      assets: ["BTC"],
-      address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-      amount: "0.0383 BTC",
-      status: "Approved",
-      requestedAt: "2/11/12 09:16AM",
-      processedAt: "2/11/12 09:30AM",
-    },
-    {
-      withdrawalId: "0x3a...b71x34",
-      userId: "James Smith",
-      assets: ["ETH"],
-      address: "0x4bbeEB066eD09B7AEd07bF39EEe0460DFa261520",
-      amount: "1.234 ETH",
-      status: "Pending",
-      requestedAt: "3/12/12 10:45AM",
-      processedAt: "--",
-    },
-    {
-      withdrawalId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      assets: ["USDT"],
-      address: "TNJ7H7JkNwqRz6d8Nq6v1Sx3p8bE1",
-      amount: "500 USDT",
-      status: "Approved",
-      requestedAt: "4/01/23 11:20AM",
-      processedAt: "4/01/23 11:35AM",
-    },
-    {
-      withdrawalId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      assets: ["BTC"],
-      address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-      amount: "0.0383 BTC",
-      status: "Approved",
-      requestedAt: "2/11/12 09:16AM",
-      processedAt: "2/11/12 09:30AM",
-    },
-    {
-      withdrawalId: "0x3a...b71x34",
-      userId: "James Smith",
-      assets: ["ETH"],
-      address: "0x4bbeEB066eD09B7AEd07bF39EEe0460DFa261520",
-      amount: "1.234 ETH",
-      status: "Pending",
-      requestedAt: "3/12/12 10:45AM",
-      processedAt: "--",
-    },
-    {
-      withdrawalId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      assets: ["USDT"],
-      address: "TNJ7H7JkNwqRz6d8Nq6v1Sx3p8bE1",
-      amount: "500 USDT",
-      status: "Approved",
-      requestedAt: "4/01/23 11:20AM",
-      processedAt: "4/01/23 11:35AM",
-    },
-  ];
+
 
   if (loading) {
     return (
@@ -125,6 +61,13 @@ export default function WithdrawHistory() {
         </thead>
 
         <tbody className="text-gray-300">
+          {withdrawals.length === 0 && (
+            <tr>
+              <td colSpan={7} className="px-3 py-4 text-center text-gray-400">
+                No withdrawals found
+              </td>
+            </tr>
+          )}
           {withdrawals.map((item, index) => {
             const asset = item.assetType || 'BTC';
             return (
@@ -133,13 +76,13 @@ export default function WithdrawHistory() {
               className="border-t border-white/5 hover:bg-white/5 cursor-pointer"
             >
               <td className="px-3 py-4 text-xs">{item._id || item.withdrawalId || 'N/A'}</td>
-              <td className="px-3 py-4 text-xs">{item.userId || 'N/A'}</td>
+              <td className="px-3 py-4 text-xs">{item.userId?.name || item.userId || 'N/A'}</td>
 
               {/* Asset */}
               <td className="px-3 py-4">
                 <div className="flex items-center gap-1">
                   <Image
-                    src={assetIcons[asset]}
+                    src={assetIcons[asset] || assetIcons['BTC']}
                     alt={asset}
                     width={20}
                     height={20}

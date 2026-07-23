@@ -15,97 +15,19 @@ export default function DepositHistory() {
       try {
         setLoading(true);
         const response = await getDepositActivities(1, 50);
-        if (response?.data) {
-          setDeposits(response.data);
-        } else {
-          setDeposits(mockDeposits);
-        }
+        const depositsList = response.deposits || response.data || response || [];
+        setDeposits(Array.isArray(depositsList) ? depositsList : []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch deposits:', err);
-        setDeposits(mockDeposits);
-        setError('Using demo data');
+        setDeposits([]);
+        setError('Failed to fetch deposits');
       } finally {
         setLoading(false);
       }
     };
     fetchDeposits();
   }, []);
-
-  const mockDeposits = [
-    {
-      tradeId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      pair: ["BTC"],
-      type: "Limit",
-      side: "Long",
-      price: "0.0383 BTC",
-      quantity: "0.39393",
-      pnl: "+0.2%",
-      pnlUp: true,
-      executedAt: "2/11/12 09:16AM",
-    },
-    {
-      tradeId: "0x3a...b71x34",
-      userId: "James Smith",
-      pair: ["ETH"],
-      type: "Market",
-      side: "Short",
-      price: "1.234 ETH",
-      quantity: "1.2",
-      pnl: "-0.2%",
-      pnlUp: false,
-      executedAt: "3/12/12 10:45AM",
-    },
-    {
-      tradeId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      pair: ["USDT"],
-      type: "Limit",
-      side: "Long",
-      price: "500 USDT",
-      quantity: "10",
-      pnl: "+0.5%",
-      pnlUp: true,
-      executedAt: "4/01/23 11:20AM",
-    },
-    {
-      tradeId: "0x5f...a92x68",
-      userId: "Tanya Hill",
-      pair: ["BTC"],
-      type: "Limit",
-      side: "Long",
-      price: "0.0383 BTC",
-      quantity: "0.39393",
-      pnl: "+0.2%",
-      pnlUp: true,
-      executedAt: "2/11/12 09:16AM",
-    },
-    {
-      tradeId: "0x3a...b71x34",
-      userId: "James Smith",
-      pair: ["ETH"],
-      type: "Market",
-      side: "Short",
-      price: "1.234 ETH",
-      quantity: "1.2",
-      pnl: "-0.2%",
-      pnlUp: false,
-      executedAt: "3/12/12 10:45AM",
-    },
-    {
-      tradeId: "0x7b...c12x55",
-      userId: "Olivia Brown",
-      pair: ["USDT"],
-      type: "Limit",
-      side: "Long",
-      price: "500 USDT",
-      quantity: "10",
-      pnl: "+0.5%",
-      pnlUp: true,
-      executedAt: "4/01/23 11:20AM",
-    },
-  ];
 
   if (loading) {
     return (
@@ -137,21 +59,28 @@ export default function DepositHistory() {
         </thead>
 
         <tbody className="text-gray-300">
-          {deposits.map((deposit, index) => {
-            const asset = deposit.assetType || 'BTC';
+          {deposits.length === 0 && (
+            <tr>
+              <td colSpan={7} className="px-3 py-4 text-center text-gray-400">
+                No deposits found
+              </td>
+            </tr>
+          )}
+          {deposits.map((item, index) => {
+            const asset = item.assetType || 'BTC';
             return (
             <tr
               key={index}
               className="border-t cursor-pointer font-Manrope border-white/5 hover:bg-white/5"
             >
-              <td className="px-3 py-4 font-Manrope text-xs">{deposit._id || deposit.depositId || 'N/A'}</td>
-              <td className="px-3 py-4 font-Manrope text-xs">{deposit.userId || 'N/A'}</td>
+              <td className="px-3 py-4 text-xs">{item._id || item.depositId || 'N/A'}</td>
+              <td className="px-3 py-4 text-xs">{item.userId?.name || item.userId || 'N/A'}</td>
 
               {/* Asset column */}
               <td className="px-3 py-4">
                 <div className="flex items-center gap-1">
                   <Image
-                    src={assetIcons[asset]}
+                    src={assetIcons[asset] || assetIcons['BTC']}
                     alt={asset}
                     width={20}
                     height={20}

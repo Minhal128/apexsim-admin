@@ -15,8 +15,7 @@ export default function OrderHistoryActiveTabs() {
     <div className="w-full rounded-2xl bg-[#0E0D15] border border-[#0E0D15] p-2 sm:p-3">
       <div className="mb-4 flex flex-col bg-[#17161E] gap-4 rounded-md p-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-Manrope text-white">
-          Trades History & Orders{" "}
-          <span className="text-gray-400 font-Manrope">(100,936)</span>
+          Trades History & Orders
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">

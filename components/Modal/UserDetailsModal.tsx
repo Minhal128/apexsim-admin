@@ -47,7 +47,10 @@ export default function UserDetailsModal({
   };
 
   const displayName = user.name && user.name.trim() !== "" ? user.name : "Unknown User";
-  const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+  
+  // If the avatar is the default relative path, fallback to ui-avatars since Admin panel doesn't have web images
+  const hasAvatar = user.avatar && user.avatar !== "/images/manimage.png";
+  const avatarUrl = hasAvatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
   const totalBalance = user.wallet?.balances?.find((b: any) => b.asset === 'USDT')?.amount || 0;
   const balances = user.wallet?.balances || [];

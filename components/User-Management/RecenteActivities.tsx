@@ -28,13 +28,17 @@ export default function RecenteActivities() {
           return {
             id: user._id.substring(0, 8),
             _id: user._id,
-            name: user.firstName ? `${user.firstName} ${user.lastName || ""}` : "",
+            name: user.name || "",
             email: user.email,
-            kyc: user.kycStatus || "Verified",
+            kyc: user.kycStatus || "unverified",
             balance: `$${usdtBalance.toFixed(2)}`,
             joined: new Date(user.createdAt).toLocaleDateString(),
             status: "Successful",
             wallet: user.wallet,
+            avatar: user.avatar,
+            country: user.country,
+            phone: user.phone,
+            isActive: user.isActive,
           };
         }) : [];
 

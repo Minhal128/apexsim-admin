@@ -165,13 +165,6 @@ export default function AdminTable() {
               Refresh
             </button>
 
-            {/* Add Admin */}
-            <button
-              onClick={() => setOpenModal(true)}
-              className="h-9 rounded-md cursor-pointer bg-[#00B595] px-4 text-sm font-Manrope text-white hover:opacity-90"
-            >
-              Add Admin
-            </button>
           </div>
         </div>
 

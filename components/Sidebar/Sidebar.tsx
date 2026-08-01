@@ -61,12 +61,6 @@ const allLinks: NavLink[] = [
     roles: ["admin", "user"],
   },
   {
-    name: "Roles & Permissions",
-    path: "/DashboardMain/rolespermissions",
-    icon: MdSecurity,
-    roles: ["admin"],
-  },
-  {
     name: "System Settings",
     path: "/DashboardMain/systemsettings",
     icon: MdSettings,

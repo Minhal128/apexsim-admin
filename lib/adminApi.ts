@@ -326,6 +326,13 @@ export const rejectKYC = async (userId: string, reason: string) => {
 };
 
 // ==================== SECURITY ====================
+export const adminTransferFunds = async (data: { userId: string, from: 'spot'|'futures', to: 'spot'|'futures', asset: string, amount: number }) => {
+    return apiRequest(`/admin/wallet/transfer`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+};
+
 export const changePassword = async (oldPassword: string, newPassword: string) => {
     return apiRequest('/admin/security/password', {
         method: 'PUT',

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactCountryFlag from "react-country-flag";
 import RecenteActivities from "../Modal/RecenteActivities";
+import AdminTransferModal from "./AdminTransferModal";
 import { disableUser, enableUser, resetUserPassword } from "@/lib/adminApi";
 
 import Avatar from "@/public/assets/profileimg.png";
@@ -32,6 +33,7 @@ export default function UserDetailsModal({
   const [isSuspended, setIsSuspended] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -111,6 +113,12 @@ export default function UserDetailsModal({
             </div>
 
             <div className="flex gap-2">
+              <button
+                onClick={() => setTransferModalOpen(true)}
+                className="rounded-lg bg-[#0055FF] cursor-pointer font-Manrope px-4 py-2 text-sm text-white"
+              >
+                Transfer
+              </button>
               <button
                 onClick={onWithdraw}
                 className="rounded-lg bg-[#1F1F26] cursor-pointer font-Manrope px-4 py-2 text-sm text-white"
@@ -244,6 +252,22 @@ export default function UserDetailsModal({
           </div>
         )}
       </div>
+
+      {transferModalOpen && (
+        <AdminTransferModal
+          open={transferModalOpen}
+          userId={user._id}
+          walletData={user.wallet}
+          onClose={() => setTransferModalOpen(false)}
+          onSuccess={() => {
+            // Wait a bit, then close the UserDetailsModal so it refetches when reopened, 
+            // or we just show a toast and close both
+            showToast("Transfer completed");
+            setTransferModalOpen(false);
+            onClose(); // Optional: Close the user modal to trigger a refresh
+          }}
+        />
+      )}
 
       <style jsx>{`
         .animate-slideIn {

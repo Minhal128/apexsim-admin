@@ -536,6 +536,22 @@ export default function OrderSpot() {
                                 const [asset] = (order.symbol || '').split("/");
                                 const icon = assetIcons[asset] || "/assets/default.png";
 
+                                // Dynamic PnL Calculation
+                                const currentPrice = marketPrices[order.symbol] || order.executedPrice || order.price;
+                                let computedPnl = order.pnl || 0;
+                                let computedPnlPercent = typeof order.pnlPercent === 'number' ? order.pnlPercent : (parseFloat(String(order.pnlPercent)) || 0);
+
+                                if (order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'completed') {
+                                    // For Spot, "PnL" typically represents value change since purchase
+                                    if (order.type === 'buy') {
+                                        computedPnl = (currentPrice - order.price) * order.amount;
+                                    } else {
+                                        computedPnl = (order.price - currentPrice) * order.amount;
+                                    }
+                                    const initialValue = order.price * order.amount;
+                                    computedPnlPercent = initialValue > 0 ? (computedPnl / initialValue) * 100 : 0;
+                                }
+
                                 return (
                                     <tr
                                         key={order._id}
@@ -585,16 +601,16 @@ export default function OrderSpot() {
                                         </td>
 
                                         <td className="px-3 py-4 text-sm">
-                                            {order.status === "completed" && order.pnlPercent ? (
+                                            {order.status !== "cancelled" ? (
                                                 <div
                                                     className={
-                                                        parseFloat(String(order.pnlPercent)) >= 0
+                                                        computedPnlPercent >= 0
                                                             ? "text-green-500"
                                                             : "text-red-500"
                                                     }
                                                 >
-                                                    {parseFloat(String(order.pnlPercent)) >= 0 ? "+" : ""}
-                                                    {order.pnlPercent}%
+                                                    {computedPnlPercent >= 0 ? "+" : ""}
+                                                    {computedPnlPercent.toFixed(2)}%
                                                 </div>
                                             ) : (
                                                 "-"

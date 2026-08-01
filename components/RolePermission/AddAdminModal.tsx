@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoMdCloseCircle } from "react-icons/io";
+import { apiRequest } from "@/lib/api";
 
 interface Props {
   open: boolean;
@@ -12,10 +13,47 @@ interface Props {
 export default function AddAdminModal({ open, onClose }: Props) {
   const [roleOpen, setRoleOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("Select Role");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
   const roles = ["Super Admin", "Admin", "Moderator"];
+
+  const handleCreate = async () => {
+    if (!name || !email || !password || selectedRole === "Select Role") {
+      setError("Please fill all fields.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      // Map roles to simple lowercase string if needed, or send as is
+      let roleValue = "admin";
+      if (selectedRole === "Super Admin") roleValue = "super_admin";
+      if (selectedRole === "Moderator") roleValue = "moderator";
+
+      await apiRequest("/admin/admins", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: roleValue,
+        }),
+      });
+      alert("Admin created successfully!");
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to create admin");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -35,6 +73,8 @@ export default function AddAdminModal({ open, onClose }: Props) {
           Basic Information
         </p>
 
+        {error && <p className="mb-3 text-sm font-Manrope text-red-500">{error}</p>}
+
         <div className="space-y-3">
           {/* Name */}
           <div className="space-y-1">
@@ -42,6 +82,8 @@ export default function AddAdminModal({ open, onClose }: Props) {
             <input
               type="text"
               placeholder="Add Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md font-Manrope border border-[#202026] p-3 text-sm text-white outline-none ring-1 ring-white/10"
             />
           </div>
@@ -52,6 +94,8 @@ export default function AddAdminModal({ open, onClose }: Props) {
             <input
               type="email"
               placeholder="Add Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-md  font-Manrope border border-[#202026] p-3 text-sm text-white outline-none ring-1 ring-white/10"
             />
           </div>
@@ -64,6 +108,8 @@ export default function AddAdminModal({ open, onClose }: Props) {
             <input
               type="password"
               placeholder="Add Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md font-Manrope border border-[#202026] p-3 text-sm text-white outline-none ring-1 ring-white/10"
             />
           </div>
@@ -114,8 +160,12 @@ export default function AddAdminModal({ open, onClose }: Props) {
         </div>
 
         <div className="mt-6">
-          <button className="w-full rounded-md font-Manrope bg-[#0055FF] py-3 text-sm font-Manrope text-white">
-            Create Account
+          <button 
+            onClick={handleCreate}
+            disabled={loading}
+            className="w-full rounded-md font-Manrope bg-[#0055FF] py-3 text-sm font-Manrope text-white disabled:opacity-50"
+          >
+            {loading ? "Creating..." : "Create Account"}
           </button>
         </div>
       </div>
